@@ -1,0 +1,11 @@
+#canvas {
+	position: absolute;
+	left: 200;
+	border: 1px;
+	border-style: solid;
+	margin-left: 380px;
+}
+
+#controls {
+	float: left;
+}
