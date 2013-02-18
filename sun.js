@@ -1,7 +1,12 @@
 Sun = (function() {
 	return {
 		name: "Sun",
-		style: "rgba(0, 0, 0, 1)",
+		style: {
+			red: 0,
+			green: 0,
+			blue: 0, 
+			alpha: 1
+		},
 		position: {
 			x: 700, 
 			y: 300

@@ -2,10 +2,15 @@ planets = (function(){
 	return {
 		Earth: {
 			name: "Earth",
-			style: "rgba(0, 0, 100, 0.2)",
+			style: {
+				red: 0,
+				green: 0,
+				blue: 100,
+				alpha: 0.4
+			},
 			startposition: {
-				x: 700,
-				y: -100
+				x: 300,
+				y: 0
 			},
 			mass: 12,
 			radius: 10,
@@ -16,9 +21,14 @@ planets = (function(){
 		},
 		Venus: {
 			name: "Venus",
-			style: "rgba(100, 0, 0, 0.2)",
+			style: {
+				red: 100,
+				green: 0,
+				blue: 0,
+				alpha: 0.4
+			},
 			startposition: {
-				x: 700,
+				x: 0,
 				y: 420
 			},
 			mass: 0.00000000001,
@@ -30,29 +40,58 @@ planets = (function(){
 		},
 		Jupiter: {
 			name: "Jupiter",
-			style: "rgba(0, 100, 0, 0.2)",
+			style: {
+				red: 0,
+				green: 100,
+				blue: 0,
+				alpha: 0.4
+			},
 			startposition: {
-				x: 550,
-				y: -90
+				x: -450,
+				y: 120
 			},
 			mass: 800,
 			radius: 60,
 			startvelocity: {
-				x: -1,
-				y: 0.3
+				x: 0.3,
+				y: -0.5
 			}
 		},
 		Nemesis: {
 			name: "Nemesis",
-			style: "rgba(200, 100, 0, 0.2)",
+			style: {
+				red: 200,
+				green: 100,
+				blue: 0,
+				alpha: 0.4
+			},
 			startposition: {
-				x: 700,
+				x: 300,
 				y: 600
 			},
 			mass: 1000,
 			radius: 20,
 			startvelocity: {
-				x: 0.6,
+				x: -0.6,
+				y: 0
+			}
+		},
+		Uranus: {
+			name: "Uranus",
+			style: {
+				red: 255,
+				green: 0,
+				blue: 0,
+				alpha: 0.4
+			},
+			startposition: {
+				x: 30,
+				y: 300
+			},
+			mass: 2000,
+			radius: 20,
+			startvelocity: {
+				x: -0.6,
 				y: 0
 			}
 		}

@@ -1,21 +1,32 @@
-(function($, _, Backbone, planets, Sun, PlanetStats) {
+(function($, _, Backbone, planets, Sun, PlanetStats, Buffer) {
 
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext("2d");
 
 var max_width = $(canvas).attr('width') - 0;
 var max_height = $(canvas).attr('height') - 0;
+
+var centre_width = max_width/2;
+var centre_height = max_height/2;
+
 /*
 	Constants
 */
 var G = 6.67;
-
+var BUFFER_SIZE = 1000;
 TIME_PERIOD = 0.01; // 0.01s
 
+var buffer = new Buffer({
+	size: BUFFER_SIZE
+});
+
+
 var force = function(obj1, obj2) {
-	// if (!_.has(planets, obj1.name) || !_.has(planets, obj2.name) || obj2.name == "Sun") {
-	// 	return;
-	// }
+	// If planets have been 'destroyed', skip them
+	if (obj1.dead || obj2.dead) {
+		return
+	}
+
 	var disp_x = obj1.position.x - obj2.position.x;
 	var disp_y = obj1.position.y - obj2.position.y;
 
@@ -24,18 +35,6 @@ var force = function(obj1, obj2) {
 	var hyp = Math.sqrt( Math.pow(disp_x, 2) + Math.pow(disp_y, 2) );
 
 	var r = hyp;
-	// console.log(r);
-
-	if (r < 5) {
-		console.log('collision');
-		if (obj1.mass > obj2.mass) {
-			obj1.mass += obj2.mass;
-			planets.splice(planets.indexOf(obj2), 1);
-		}
-		obj1.velocity.x += obj2.velocity.x;
-		obj1.velocity.y += obj2.velocity.y;
-		return;
-	}
 
 	var force = G * obj1.mass * obj2.mass * (1 / (r*r));
 
@@ -62,52 +61,93 @@ var bounce = function(planet) {
 }
 
 var tick = function(stats) {
+	canvas.width = canvas.width;
 	_.each(planets, function(planet1, name1) {
-		if (planet1.position.x >= max_width || planet1.position.x <= 0) {
-			bounce(planet1);
+		if ((planet1.position.x + planet1.radius) >= max_width || (planet1.position.x - planet1.radius) <= 0 || (planet1.position.y + planet1.radius) >= max_height || (planet1.position.y - planet1.radius) <= 0) {
+			// bounce(planet1);
 		}
-		if (planet1.position.y >= max_height || planet1.position.y <= 0) {
-			bounce(planet1);
-		}
+
 		force(Sun, planet1);
+
+		// Check collision with Sun
+		var x = planet1.position.x - Sun.position.x;
+		var y = planet1.position.y - Sun.position.y;
+		var r = Sun.radius + planet1.radius;
+		if ((x*x + y*y) < (r*r)) {
+			// Planet has collided with Sun
+			planet1.dead = true;
+			return;
+		}
+
 		_.each(planets, function(planet2, name2) {
 			if (name1 == name2) {
 				return;
+			}
+			// Check if any planets have collided
+			var x = planet2.position.x - planet1.position.x;
+			var y = planet2.position.y - planet1.position.y;
+			var r = (planet1.radius >= planet2.radius) ? planet1.radius : planet2.radius;
+			if ((x*x + y*y) < (r*r)) {
+				// Planets have collided
+				var smaller_planet = (planet1.mass >= planet2.mass) ? planet2 : planet1;
+				smaller_planet.dead = true;
 			}
 			force(planet1, planet2);
 		});
 	});
 	draw();
-	// stats.render();
+	buffer.each(renderFrame);
+	renderFrame({
+		style: _.clone(Sun.style),
+		x: Sun.position.x,
+		y: Sun.position.y,
+		radius: Sun.radius
+	});
 }
 
 var drawPlanet = function(planet) {
-	ctx.strokeStyle = planet.style;
+	buffer.add({
+		style: _.clone(planet.style),
+		x: planet.position.x,
+		y: planet.position.y,
+		radius: planet.radius
+	});
+}
+
+var renderFrame = function(frame) {
+	if (frame.alpha <= 0) {
+		return;
+	}
+	ctx.strokeStyle = (function(style) {
+		return "rgba("+style.red+","+style.green+","+style.blue+","+style.alpha+")";
+	})(frame.style);
 	ctx.beginPath();
-	ctx.arc(planet.position.x, planet.position.y, planet.radius, 0, Math.PI*2, false);
+	ctx.arc(frame.x, frame.y, frame.radius, 0, Math.PI*2, false);
 	ctx.closePath();
 	ctx.stroke();
 }
 	
-	
 var draw = function() {
 	_.each(planets, function(planet, name) {
-		if (name == "Sun") {
+		if (planet.dead) {
 			return;
 		}
 		drawPlanet(planet);
-	})
+	});
 }
 
 var start = function() {
 	window.tickID && window.clearInterval(window.tickID, 10);
 	canvas.width = canvas.width;
+	Sun.position.x = centre_width;
+	Sun.position.y = centre_height;
 	drawPlanet(Sun);
 	_.each(planets, function(planet, name) {
+		planet.dead = false;
 		if (name == 'Sun') {return};
 		planet.position = {
-			x: planet.startposition.x,
-			y: planet.startposition.y
+			x: centre_width + planet.startposition.x,
+			y: centre_height + planet.startposition.y
 		};
 		planet.velocity = {
 			x: planet.startvelocity.x,
@@ -152,10 +192,12 @@ var saveState = function() {
 	This function walks through all the strings stored in localStorage and applies those
 	properties to the objects they correspond to.
 	The localStorage keys are the object property chains put into words, i.e.
-	Nemesis.position.x is stored as "Nemesis_position_x";
-	All the properties that exist are stored, separated by "/" characters.
+	Nemesis.position.x is stored under the key "Nemesis_position_x";
+	All the properties that exist for a planet are stored in "<Planetname>", separated by "/" characters.
 	The lastpath thing is there because in order to alter the global planet object,
-	we need a reference
+	we need a reference to it, and javascript only passes objects by reference, so we 
+	have to stop traversing when we hit the last thing in the tree that is an object
+	-- i.e. before we hit a 'value'.
 */
 var restoreState = function() {
 	var ls = window.localStorage;
@@ -212,4 +254,4 @@ $(document).ready(function() {
 	start();
 });
 
-})($, _, Backbone, planets, Sun, PlanetStats);
+})($, _, Backbone, planets, Sun, PlanetStats, Buffer);
