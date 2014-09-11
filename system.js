@@ -24,7 +24,7 @@ var buffer = new Buffer({
 var force = function(obj1, obj2) {
 	// If planets have been 'destroyed', skip them
 	if (obj1.dead || obj2.dead) {
-		return
+		return;
 	}
 
 	var disp_x = obj1.position.x - obj2.position.x;
@@ -53,12 +53,12 @@ var force = function(obj1, obj2) {
 		obj1.velocity = 0 - obj1.velocity;
 		obj2.velocity = 0 - obj2.velocity;
 	}
-}
+};
 
 var bounce = function(planet) {
 	planet.velocity.x = - planet.velocity.x;
 	planet.velocity.y = - planet.velocity.y;
-}
+};
 
 var tick = function(stats) {
 	canvas.width = canvas.width;
@@ -75,7 +75,7 @@ var tick = function(stats) {
 		var r = Sun.radius + planet1.radius;
 		if ((x*x + y*y) < (r*r)) {
 			// Planet has collided with Sun
-			planet1.dead = true;
+			// planet1.dead = true;
 			return;
 		}
 
@@ -90,7 +90,7 @@ var tick = function(stats) {
 			if ((x*x + y*y) < (r*r)) {
 				// Planets have collided
 				var smaller_planet = (planet1.mass >= planet2.mass) ? planet2 : planet1;
-				smaller_planet.dead = true;
+				// smaller_planet.dead = true;
 			}
 			force(planet1, planet2);
 		});
@@ -103,7 +103,7 @@ var tick = function(stats) {
 		y: Sun.position.y,
 		radius: Sun.radius
 	});
-}
+};
 
 var drawPlanet = function(planet) {
 	buffer.add({
@@ -112,7 +112,7 @@ var drawPlanet = function(planet) {
 		y: planet.position.y,
 		radius: planet.radius
 	});
-}
+};
 
 var renderFrame = function(frame) {
 	if (frame.alpha <= 0) {
@@ -125,7 +125,7 @@ var renderFrame = function(frame) {
 	ctx.arc(frame.x, frame.y, frame.radius, 0, Math.PI*2, false);
 	ctx.closePath();
 	ctx.stroke();
-}
+};
 	
 var draw = function() {
 	_.each(planets, function(planet, name) {
@@ -134,7 +134,7 @@ var draw = function() {
 		}
 		drawPlanet(planet);
 	});
-}
+};
 
 var start = function() {
 	window.tickID && window.clearInterval(window.tickID, 10);
@@ -155,12 +155,12 @@ var start = function() {
 		};
 	});
 	window.tickID = window.setInterval(tick, 10);
-}
+};
 
 var updatePlanet = function(planet) {
 	planets[planet.name] = planet;
 	saveState();
-}
+};
 
 var saveState = function() {
 	console.log("save state");
@@ -185,7 +185,7 @@ var saveState = function() {
 		ls[name] = fields;
 	});
 	ls['planets'] = _.reduce(_.pluck(planets, 'name'), function(memo, planet) { return planet+'_'+memo}, '');
-}
+};
 
 /*
 	Pretty complex function, so a bit of explanation needed.
@@ -231,11 +231,12 @@ var restoreState = function() {
 			obj[lastpath] = (typeof(obj[lastpath]) == 'number') ? ls[f] - 0 : ls[f];
 		});
 	});
-}
+};
 
 $(document).ready(function() {
 	// Restore state from localStorage
 	restoreState();
+
 	// Create fields
 	_.each(planets, function(planet, name) {
 		var elem = $('<div id="'+name+'"></div>');
